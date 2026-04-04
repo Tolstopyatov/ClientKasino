@@ -9,7 +9,7 @@ import javafx.stage.Stage;
 public class RouletteApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/roulette.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/login.fxml"));
         Scene scene = new Scene(loader.load(), 900, 500);
         primaryStage.setTitle("Multiplayer Roulette");
         primaryStage.setScene(scene);

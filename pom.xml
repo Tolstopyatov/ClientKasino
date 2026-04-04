@@ -41,7 +41,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>roulette.client.RouletteApp</mainClass>
+                    <mainClass>roulette.RouletteApp</mainClass>
                 </configuration>
             </plugin>
         </plugins>

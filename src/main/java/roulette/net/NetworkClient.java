@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class NetworkClient {
@@ -25,8 +26,8 @@ public class NetworkClient {
     private Consumer<GameState> onGameStateUpdate;
     private Consumer<Integer> onSpinResult;
     private Consumer<String> onRoundStart;
-    private Consumer<Boolean> onLoginResult;
-    private Consumer<Boolean> onRegisterResult;
+    private BiConsumer<Boolean, String> onLoginResult;
+    private BiConsumer<Boolean, String> onRegisterResult;
     private Consumer<String> onError;
 
     public void connect(String host, int port) throws IOException {
@@ -59,13 +60,13 @@ public class NetworkClient {
             case "login_result":
                 String loginData = root.get("data").getAsString();
                 boolean loginSuccess = "success".equals(loginData);
-                if (onLoginResult != null) onLoginResult.accept(loginSuccess);
+                if (onLoginResult != null) onLoginResult.accept(loginSuccess, loginData);
                 break;
 
             case "register_result":
                 String regData = root.get("data").getAsString();
                 boolean regSuccess = "success".equals(regData);
-                if (onRegisterResult != null) onRegisterResult.accept(regSuccess);
+                if (onRegisterResult != null) onRegisterResult.accept(regSuccess, regData);
                 break;
 
             case "update_state":
@@ -129,8 +130,8 @@ public class NetworkClient {
     public void setOnGameStateUpdate(Consumer<GameState> callback) { this.onGameStateUpdate = callback; }
     public void setOnSpinResult(Consumer<Integer> callback) { this.onSpinResult = callback; }
     public void setOnRoundStart(Consumer<String> callback) { this.onRoundStart = callback; }
-    public void setOnLoginResult(Consumer<Boolean> callback) { this.onLoginResult = callback; }
-    public void setOnRegisterResult(Consumer<Boolean> callback) { this.onRegisterResult = callback; }
+    public void setOnLoginResult(BiConsumer<Boolean, String> callback) { this.onLoginResult = callback; }
+    public void setOnRegisterResult(BiConsumer<Boolean, String> callback) { this.onRegisterResult = callback; }
     public void setOnError(Consumer<String> callback) { this.onError = callback; }
 
     // Вспомогательный класс для отправки сообщений

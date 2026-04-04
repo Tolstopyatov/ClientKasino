@@ -21,6 +21,10 @@ public class TableCanvas extends Canvas {
     private String currentPlayerName = "You";
     private Bet pendingBet = null; // выбранная клетка для ставки
 
+    public TableCanvas() {
+        this(900, 400); // Значения по умолчанию, можно настроить
+    }
+
     public TableCanvas(double width, double height) {
         super(width, height);
         CELL_WIDTH = (width - ZERO_WIDTH) / COLS;

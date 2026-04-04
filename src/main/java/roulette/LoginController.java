@@ -10,6 +10,8 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import roulette.net.NetworkClient;
 
+import java.io.IOException;
+
 public class LoginController {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
@@ -22,12 +24,13 @@ public class LoginController {
         networkClient = new NetworkClient();
         networkClient.setOnLoginResult(this::onLoginResult);
         networkClient.setOnRegisterResult(this::onRegisterResult);
-        // Подключаемся к серверу при старте окна
+        networkClient.setOnError(errorMsg -> javafx.application.Platform.runLater(() -> messageLabel.setText("Error: " + errorMsg)));
+
         new Thread(() -> {
             try {
                 networkClient.connect("localhost", 12345);
-            } catch (Exception e) {
-                javafx.application.Platform.runLater(() -> messageLabel.setText("Connection error"));
+            } catch (IOException e) {
+                javafx.application.Platform.runLater(() -> messageLabel.setText("Connection error: " + e.getMessage()));
             }
         }).start();
     }
@@ -57,8 +60,7 @@ public class LoginController {
     private void onLoginResult(boolean success, String message) {
         javafx.application.Platform.runLater(() -> {
             if (success) {
-                // Открыть игровой стол
-                openGameWindow();
+                openGameWindow(usernameField.getText());
             } else {
                 messageLabel.setText("Login failed: " + message);
             }
@@ -75,17 +77,18 @@ public class LoginController {
         });
     }
 
-    private void openGameWindow() {
+    private void openGameWindow(String username) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/roulette.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game_table.fxml")); // Изменено на game_table.fxml
             Parent root = loader.load();
             RouletteController controller = loader.getController();
-            controller.initAfterLogin(networkClient, usernameField.getText());
+            controller.initAfterLogin(networkClient, username);
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 500));
-            stage.setTitle("Roulette - " + usernameField.getText());
-        } catch (Exception e) {
+            stage.setScene(new Scene(root, 900, 600)); // Увеличена высота для ScrollPane
+            stage.setTitle("Roulette - " + username);
+        } catch (IOException e) {
             e.printStackTrace();
+            messageLabel.setText("Failed to load game window: " + e.getMessage());
         }
     }
 }

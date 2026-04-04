@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import roulette.model.Bet;
@@ -17,39 +18,34 @@ public class RouletteController {
     @FXML private Label lastNumberLabel;
     @FXML private TextField betAmountField;
     @FXML private Button placeBetButton;
-    @FXML private VBox messageBox;
+    @FXML private ScrollPane messageScrollPane; // Изменено на ScrollPane
+    @FXML private VBox messageContentBox; // Добавлен VBox внутри ScrollPane
 
     private NetworkClient networkClient;
     private String playerName;
     private GameState currentState;
 
-    // Этот метод вызывается из LoginController после успешного входа
     public void initAfterLogin(NetworkClient client, String name) {
         this.networkClient = client;
         this.playerName = name;
 
-        // Устанавливаем колбэки
         networkClient.setOnGameStateUpdate(this::updateGameState);
         networkClient.setOnSpinResult(this::showSpinResult);
         networkClient.setOnRoundStart(this::onRoundStart);
         networkClient.setOnError(this::onError);
-
-        // Запрашиваем начальное состояние (сервер сам пришлёт после логина)
-        // Можно также добавить явный запрос, но сервер присылает update_state автоматически
     }
 
     @FXML
     public void initialize() {
-
         balanceLabel.setText("Balance: 0");
         lastNumberLabel.setText("Last: -");
         placeBetButton.setOnAction(e -> sendBet());
 
-        // Добавим кнопку для выхода
         Button logoutButton = new Button("Logout");
         logoutButton.setOnAction(e -> logout());
-        // Можно добавить в верхнюю панель, но для простоты добавим в messageBox
-        // В реальном приложении лучше разместить отдельно.
+        if (messageContentBox != null) { // Добавляем кнопку в messageContentBox
+            messageContentBox.getChildren().add(logoutButton);
+        }
     }
 
     private void updateGameState(GameState state) {
@@ -68,7 +64,6 @@ public class RouletteController {
         Platform.runLater(() -> {
             lastNumberLabel.setText("Last: " + number);
             addMessage("Wheel stopped at " + number);
-            // Здесь можно добавить анимацию вращения колеса
         });
     }
 
@@ -79,7 +74,6 @@ public class RouletteController {
     private void onError(String error) {
         Platform.runLater(() -> {
             addMessage("ERROR: " + error);
-            // При критической ошибке можно закрыть приложение
         });
     }
 
@@ -99,7 +93,6 @@ public class RouletteController {
             return;
         }
 
-        // Проверка баланса (локальная)
         if (currentState != null && amount > currentState.getBalance()) {
             addMessage("Insufficient balance!");
             return;
@@ -117,10 +110,8 @@ public class RouletteController {
         Platform.runLater(() -> {
             Label label = new Label(msg);
             label.setStyle("-fx-text-fill: white; -fx-background-color: #333; -fx-padding: 2 5;");
-            messageBox.getChildren().add(label);
-            // Автопрокрутка вниз
-            messageBox.layout();
-            messageBox.setScrollTop(Double.MAX_VALUE);
+            messageContentBox.getChildren().add(label);
+            messageScrollPane.setVvalue(1.0); // Автопрокрутка вниз
         });
     }
 
