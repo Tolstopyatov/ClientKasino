@@ -4,5 +4,6 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar"
     ],
+    "java.jdt.ls.vmargs": "-Djava.library.path=... -Djavafx.ignored=false",
     "java.configuration.updateBuildConfiguration": "automatic"
 }

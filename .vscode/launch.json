@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Kazino999",
+            "request": "launch",
+            "mainClass": "roulette.KazinoApp",
+            "vmArgs": "--module-path ${env:JAVAFX_HOME}/lib --add-modules javafx.controls,javafx.fxml"
+        }
+    ]
+}
