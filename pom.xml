@@ -21,6 +21,8 @@
     <javafx.version>21.0.2</javafx.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
+    <maven.wagon.httpconnection.timeout>120000</maven.wagon.httpconnection.timeout>
+    <maven.wagon.http.retryHandler.count>5</maven.wagon.http.retryHandler.count>
   </properties>
   <dependencies>
     <dependency>
@@ -106,7 +108,7 @@
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
-          <mainClass>roulette.RouletteApp</mainClass>
+            <mainClass>roulette.KazinoApp</mainClass>
         </configuration>
       </plugin>
       <plugin>
