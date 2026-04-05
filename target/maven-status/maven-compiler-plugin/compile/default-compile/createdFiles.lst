@@ -1,8 +1,7 @@
-roulette\net\NetworkClient$Message.class
-roulette\ui\TableCanvas.class
 roulette\net\NetworkClient.class
-roulette\model\GameState.class
-roulette\RouletteController.class
 roulette\LoginController.class
 roulette\KazinoApp.class
+roulette\net\NetworkClient$Message.class
+roulette\model\GameState.class
+roulette\RouletteController.class
 roulette\model\Bet.class

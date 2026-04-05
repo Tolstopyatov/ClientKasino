@@ -24,13 +24,13 @@ public class LoginController {
         networkClient = new NetworkClient();
         networkClient.setOnLoginResult(this::onLoginResult);
         networkClient.setOnRegisterResult(this::onRegisterResult);
-        networkClient.setOnError(errorMsg -> javafx.application.Platform.runLater(() -> messageLabel.setText("Error: " + errorMsg)));
+        networkClient.setOnError(errorMsg -> javafx.application.Platform.runLater(() -> messageLabel.setText("Ошибка: " + errorMsg)));
 
         new Thread(() -> {
             try {
                 networkClient.connect("192.168.1.151", 12345);
             } catch (IOException e) {
-                javafx.application.Platform.runLater(() -> messageLabel.setText("Connection error: " + e.getMessage()));
+                javafx.application.Platform.runLater(() -> messageLabel.setText("Ошибка соединения: " + e.getMessage()));
             }
         }).start();
     }
@@ -40,7 +40,7 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
         if (username.isEmpty() || password.isEmpty()) {
-            messageLabel.setText("Enter username and password");
+            messageLabel.setText("Введите имя и пароль");
             return;
         }
         networkClient.login(username, password);
@@ -51,7 +51,7 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
         if (username.isEmpty() || password.isEmpty()) {
-            messageLabel.setText("Enter username and password");
+            messageLabel.setText("Введите имя и пароль");
             return;
         }
         networkClient.register(username, password);
@@ -62,7 +62,7 @@ public class LoginController {
             if (success) {
                 openGameWindow(usernameField.getText());
             } else {
-                messageLabel.setText("Login failed: " + message);
+                messageLabel.setText("Вход не удался: " + message);
             }
         });
     }
@@ -70,25 +70,25 @@ public class LoginController {
     private void onRegisterResult(boolean success, String message) {
         javafx.application.Platform.runLater(() -> {
             if (success) {
-                messageLabel.setText("Registration successful! Please login.");
+                messageLabel.setText("Регистрация случилась! Войдите.");
             } else {
-                messageLabel.setText("Registration failed: " + message);
+                messageLabel.setText("Регистрация обломалась: " + message);
             }
         });
     }
 
     private void openGameWindow(String username) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/game_table.fxml")); // Изменено на game_table.fxml
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/main_menu.fxml"));
             Parent root = loader.load();
-            RouletteController controller = loader.getController();
-            controller.initAfterLogin(networkClient, username);
+            MainMenuController controller = loader.getController();
+            controller.initData(networkClient, username);
             Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root, 900, 600)); // Увеличена высота для ScrollPane
-            stage.setTitle("Roulette - " + username);
+            stage.setScene(new Scene(root, 600, 400));
+            stage.setTitle("Казино - " + username);
         } catch (IOException e) {
             e.printStackTrace();
-            messageLabel.setText("Failed to load game window: " + e.getMessage());
+            messageLabel.setText("Ошибка загрузки меню: " + e.getMessage());
         }
     }
 }

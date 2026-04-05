@@ -8,7 +8,7 @@
 <!-- ====================================================================== -->
 <!--                                                                        -->
 <!-- Effective POM for project                                              -->
-<!-- 'com.roulette:multiplayer-roulette-client:jar:1.0-SNAPSHOT'            -->
+<!-- 'com.roulette:multiplayer-roulette-client:pom:1.0-SNAPSHOT'            -->
 <!--                                                                        -->
 <!-- ====================================================================== -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -21,8 +21,8 @@
     <javafx.version>21.0.2</javafx.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
-    <maven.wagon.httpconnection.timeout>120000</maven.wagon.httpconnection.timeout>
     <maven.wagon.http.retryHandler.count>5</maven.wagon.http.retryHandler.count>
+    <maven.wagon.httpconnection.timeout>120000</maven.wagon.httpconnection.timeout>
   </properties>
   <dependencies>
     <dependency>
@@ -108,7 +108,7 @@
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
-            <mainClass>roulette.KazinoApp</mainClass>
+          <mainClass>roulette.KazinoApp</mainClass>
         </configuration>
       </plugin>
       <plugin>
