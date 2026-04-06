@@ -28,7 +28,16 @@ public class MainMenuController {
         stage.setScene(new Scene(root, 950, 750));
         stage.setTitle("Рулетка - " + username);
     }
-
+    @FXML
+    private void openCockroachRace(ActionEvent event) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/tarakany.fxml"));
+        Parent root = loader.load();
+        Tarakan controller = loader.getController();
+        controller.initAfterLogin(networkClient, username);
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(new Scene(root, 950, 700));
+        stage.setTitle("Тараканьи бега - " + username);
+    }
     @FXML
     private void logout(ActionEvent event) {
         networkClient.disconnect();

@@ -29,6 +29,7 @@ public class NetworkClient {
     private BiConsumer<Boolean, String> onLoginResult;
     private BiConsumer<Boolean, String> onRegisterResult;
     private Consumer<String> onError;
+    private Consumer<String> onChatMessage;
 
     public void connect(String host, int port) throws IOException {
         socket = new Socket(host, port);
@@ -45,6 +46,7 @@ public class NetworkClient {
             } catch (IOException e) {
                 e.printStackTrace();
                 if (onError != null) onError.accept("Connection lost");
+                if (onChatMessage != null) onChatMessage.accept("System: Connection lost");
             } finally {
                 disconnect();
             }
@@ -84,6 +86,22 @@ public class NetworkClient {
                 if (onRoundStart != null) onRoundStart.accept(roundMsg);
                 break;
 
+            case "race_start":
+                if (onRaceStart != null) {
+                    Map<String, Object> startData = gson.fromJson(root.get("data"), Map.class);
+                    onRaceStart.accept(startData);
+                }
+                break;
+            case "race_result":
+                if (onRaceResult != null) {
+                    Map<String, Object> resultData = gson.fromJson(root.get("data"), Map.class);
+                    onRaceResult.accept(resultData);
+                }
+                break;
+            case "chat_message":
+                String chatMsg = root.get("data").getAsString();
+                if (onChatMessage != null) onChatMessage.accept(chatMsg);
+                break;
             case "error":
                 String errorMsg = root.get("data").getAsString();
                 if (onError != null) onError.accept(errorMsg);
@@ -114,7 +132,19 @@ public class NetworkClient {
         Message msg = new Message("place_bet", bet);
         out.println(gson.toJson(msg));
     }
-
+    public void placeCockroachBet(int cockroachId, int amount) {
+        if (!connected) return;
+        Map<String, Object> data = new HashMap<>();
+        data.put("cockroachId", cockroachId);
+        data.put("amount", amount);
+        Message msg = new Message("place_cockroach_bet", data);
+        out.println(gson.toJson(msg));
+    }
+    public void sendChatMessage(String message) {
+        if (!connected) return;
+        Message msg = new Message("chat_message", message);
+        out.println(gson.toJson(msg));
+    }
     public void disconnect() {
         connected = false;
         try {
@@ -133,8 +163,16 @@ public class NetworkClient {
     public void setOnLoginResult(BiConsumer<Boolean, String> callback) { this.onLoginResult = callback; }
     public void setOnRegisterResult(BiConsumer<Boolean, String> callback) { this.onRegisterResult = callback; }
     public void setOnError(Consumer<String> callback) { this.onError = callback; }
+    public void setOnChatMessage(Consumer<String> callback) { this.onChatMessage = callback; }
 
-    // Вспомогательный класс для отправки сообщений
+    // Добавить поля
+    private Consumer<Map<String, Object>> onRaceStart;
+    private Consumer<Map<String, Object>> onRaceResult;
+
+    // Сеттеры
+    public void setOnRaceStart(Consumer<Map<String, Object>> callback) { this.onRaceStart = callback; }
+    public void setOnRaceResult(Consumer<Map<String, Object>> callback) { this.onRaceResult = callback; }
+
     private static class Message {
         String type;
         Object data;

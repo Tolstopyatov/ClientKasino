@@ -18,7 +18,7 @@
       </Label>
       <Button onAction="#openRoulette" prefWidth="200.0" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px;" text="Рулетка" />
       <Button disable="true" prefWidth="200.0" style="-fx-background-color: #555; -fx-text-fill: white; -fx-font-size: 16px;" text="21 (Coming Soon)" />
-      <Button disable="true" prefWidth="200.0" style="-fx-background-color: #555; -fx-text-fill: white; -fx-font-size: 16px;" text="Тараканьи бега (Coming Soon)" />
+      <Button onAction="#openCockroachRace" prefWidth="200.0" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px;" text="Тараканьи бега" />
       <Button disable="true" prefWidth="200.0" style="-fx-background-color: #555; -fx-text-fill: white; -fx-font-size: 16px;" text="Однорукий бандито (Coming Soon)" />
       <Button onAction="#logout" prefWidth="200.0" style="-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 16px;" text="Выйти" />
    </children>
