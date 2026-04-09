@@ -28,7 +28,7 @@ public class LoginController {
 
         new Thread(() -> {
             try {
-                networkClient.connect("127.0.0.1", 12345);//"192.168.1.151"
+                networkClient.connect("192.168.1.151", 12345);//"192.168.1.151"
             } catch (IOException e) {
                 javafx.application.Platform.runLater(() -> messageLabel.setText("Ошибка соединения: " + e.getMessage()));
             }
