@@ -76,7 +76,6 @@ public class RouletteController {
         chipPanelBox.setSpacing(10);
         chipPanelBox.setStyle("-fx-background-color: #E9ECEF; -fx-padding: 10; -fx-background-radius: 5;");
 
-        // Фишки для числовых ставок (номиналы)
         int[] values = {10, 50, 100, 500};
         Color[] colors = {Color.web("#FFD700"), Color.web("#FF6347"), Color.web("#6A5ACD"), Color.web("#4682B4")};
         for (int i = 0; i < values.length; i++) {

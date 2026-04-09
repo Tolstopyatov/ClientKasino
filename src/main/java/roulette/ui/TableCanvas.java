@@ -1,5 +1,6 @@
 package roulette.ui;
 
+import java.util.Random;
 import javafx.animation.AnimationTimer;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -128,7 +129,7 @@ public class TableCanvas extends Canvas {
         double sidePanelWidth = 80;
         double sideX = getWidth() - sidePanelWidth - 10; // Справа
         double sideY = 10;
-        double sideHeight = (getHeight() - 40) / 4; // Распределяем по высоте
+        double sideHeight = 30;//(getHeight() - 40) / 2; // Распределяем по высоте
 
         String[] labels = {"Красное", "Чёрное", "Чёт", "Нечёт"};
         Color[] colors = {Color.web("#DC3545"), Color.web("#343A40"), Color.web("#28A745"), Color.web("#FFC107")};
@@ -291,15 +292,21 @@ public class TableCanvas extends Canvas {
         final long durationNanos = 5_000_000_000L; // 5 сек
         final long startTime = System.nanoTime();
         final double startRotation = wheelRotation;
+        final double POINTER_ANGLE = 270.0;
+        Random random = new Random();
+        double targetAngle = (POINTER_ANGLE - winningNumber * (360.0 / 37)) % 360;
+        if (targetAngle < 0) targetAngle += 360;
 
-        double targetAngleForNumber = (360.0 / 37) * winningNumber;
-        double targetRotation = Math.abs(startRotation) + 360 * 10 + (targetAngleForNumber - Math.abs(startRotation % 360));
-
+        double fullTurns = 360 * 10;
+        double delta = targetAngle - (startRotation % 360);
+        if (delta <= 0) delta += 360;
+        double totalDelta = fullTurns + delta;
+        final double targetRotation = startRotation + totalDelta - random.nextInt(1, 800)/100;
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 long elapsed = now - startTime;
-                double t = Math.min(1.0, elapsed / (double) durationNanos);
+                double t = Math.min(100.0, elapsed / (double) durationNanos);
                 double ease = 1 - Math.pow(1 - t, 3);
                 wheelRotation = startRotation + (targetRotation - startRotation) * ease;
                 redraw();
@@ -343,7 +350,6 @@ public class TableCanvas extends Canvas {
             gc.strokeLine(wheelCenterX, wheelCenterY, wheelCenterX + wheelRadius * Math.cos(angle), wheelCenterY + wheelRadius * Math.sin(angle));
         }
 
-        // Рисуем числа на секторах
         gc.setFill(Color.WHITE);
         gc.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         for (int i = 0; i < 37; i++) {

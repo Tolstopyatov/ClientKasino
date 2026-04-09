@@ -34,7 +34,6 @@ public class BetPanel extends StackPane {
         setAlignment(Pos.CENTER);
         getChildren().addAll(chip, valueLabel);
 
-        // Drag-and-Drop
         setOnDragDetected(event -> {
             Dragboard db = startDragAndDrop(TransferMode.COPY);
             ClipboardContent content = new ClipboardContent();
