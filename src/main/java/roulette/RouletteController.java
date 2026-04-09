@@ -3,21 +3,16 @@ package roulette;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.input.ClipboardContent;
 import javafx.stage.Stage;
 import roulette.model.Bet;
 import roulette.model.GameState;
@@ -26,22 +21,19 @@ import roulette.ui.BetPanel;
 import roulette.ui.TableCanvas;
 
 import java.io.IOException;
-import java.util.List;
 
 public class RouletteController {
     @FXML private TableCanvas tableCanvas;
     @FXML private Label balanceLabel;
     @FXML private Label lastNumberLabel;
-    @FXML private ScrollPane messageScrollPane;
-    @FXML private VBox messageContentBox;
     @FXML private HBox chipPanelBox;
     @FXML private TextField chatInputField;
+    @FXML private VBox messageContentBox;
+    @FXML private ScrollPane messageScrollPane;
 
     private NetworkClient networkClient;
     private String playerName;
     private GameState currentState;
-    private Bet pendingBet;          // ставка, собранная из drag&drop
-    private int selectedChipValue;   // номинал перетаскиваемой фишки
 
     public void initAfterLogin(NetworkClient client, String name) {
         this.networkClient = client;
@@ -52,112 +44,87 @@ public class RouletteController {
         networkClient.setOnRoundStart(this::onRoundStart);
         networkClient.setOnError(this::onError);
         networkClient.setOnChatMessage(this::addChatMessage);
-
-        // Запрашиваем начальное состояние игры
-        // networkClient.requestGameState(); // Если есть такой метод на сервере
     }
 
     @FXML
     public void initialize() {
         balanceLabel.setText("Баланс: 0");
         lastNumberLabel.setText("Последнее: -");
-
         createChipPanels();
         setupDragAndDrop();
-
-        // Убедимся, что TableCanvas перерисовывается при изменении размеров
-        tableCanvas.widthProperty().addListener((obs, oldVal, newVal) -> tableCanvas.redraw());
-        tableCanvas.heightProperty().addListener((obs, oldVal, newVal) -> tableCanvas.redraw());
+        tableCanvas.widthProperty().addListener(obs -> tableCanvas.redraw());
+        tableCanvas.heightProperty().addListener(obs -> tableCanvas.redraw());
     }
 
     private void createChipPanels() {
         if (chipPanelBox == null) return;
         chipPanelBox.getChildren().clear();
         chipPanelBox.setSpacing(10);
-        chipPanelBox.setStyle("-fx-background-color: #E9ECEF; -fx-padding: 10; -fx-background-radius: 5;");
-
         int[] values = {10, 50, 100, 500};
-        Color[] colors = {Color.web("#FFD700"), Color.web("#FF6347"), Color.web("#6A5ACD"), Color.web("#4682B4")};
+        javafx.scene.paint.Color[] colors = {
+            javafx.scene.paint.Color.web("#FFD700"),
+            javafx.scene.paint.Color.web("#FF6347"),
+            javafx.scene.paint.Color.web("#6A5ACD"),
+            javafx.scene.paint.Color.web("#4682B4")
+        };
         for (int i = 0; i < values.length; i++) {
-            BetPanel chip = new BetPanel(values[i], "number", colors[i]);
-            chipPanelBox.getChildren().add(chip);
+            chipPanelBox.getChildren().add(new BetPanel(values[i], "number", colors[i]));
         }
-
-        // Фишки для side-ставок
-        BetPanel redChip = new BetPanel(10, "red", Color.web("#E63946"));
-        BetPanel blackChip = new BetPanel(10, "black", Color.web("#343A40"));
-        BetPanel evenChip = new BetPanel(10, "even", Color.web("#28A745"));
-        BetPanel oddChip = new BetPanel(10, "odd", Color.web("#FFC107"));
-
-        chipPanelBox.getChildren().addAll(redChip, blackChip, evenChip, oddChip);
+        chipPanelBox.getChildren().addAll(
+            new BetPanel(10, "red", javafx.scene.paint.Color.web("#E63946")),
+            new BetPanel(10, "black", javafx.scene.paint.Color.web("#343A40")),
+            new BetPanel(10, "even", javafx.scene.paint.Color.web("#28A745")),
+            new BetPanel(10, "odd", javafx.scene.paint.Color.web("#FFC107"))
+        );
     }
 
     private void setupDragAndDrop() {
-        // Обработка начала перетаскивания с фишки
         chipPanelBox.getChildren().forEach(node -> {
             if (node instanceof BetPanel) {
-                BetPanel betPanel = (BetPanel) node;
-                betPanel.setOnDragDetected(event -> {
-                    Dragboard db = betPanel.startDragAndDrop(TransferMode.COPY);
+                BetPanel bp = (BetPanel) node;
+                bp.setOnDragDetected(event -> {
+                    Dragboard db = bp.startDragAndDrop(TransferMode.COPY);
                     ClipboardContent content = new ClipboardContent();
-                    // Передаем тип ставки, значение (если есть) и номинал фишки
-                    content.putString(betPanel.getBetType() + ":" + betPanel.getChipValue());
+                    content.putString(bp.getBetType() + ":" + bp.getChipValue());
                     db.setContent(content);
                     event.consume();
                 });
             }
         });
 
-        // Обработка перетаскивания над TableCanvas
         tableCanvas.setOnDragOver(event -> {
-            if (event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.COPY);
-            }
+            if (event.getDragboard().hasString()) event.acceptTransferModes(TransferMode.COPY);
             event.consume();
         });
 
-        // Обработка отпускания фишки на TableCanvas
         tableCanvas.setOnDragDropped(event -> {
             Dragboard db = event.getDragboard();
-            boolean success = false;
             if (db.hasString()) {
                 String[] parts = db.getString().split(":");
                 if (parts.length >= 2) {
-                    String betTypeStr = parts[0];
+                    String betType = parts[0];
                     int chipValue = Integer.parseInt(parts[1]);
-
                     double x = event.getX();
                     double y = event.getY();
-
                     Object hit = tableCanvas.hitTest(x, y);
                     if (hit != null) {
-                        if (betTypeStr.equals("number") && hit instanceof Integer) {
-                            int number = (Integer) hit;
-                            pendingBet = new Bet(playerName, "number", number, chipValue);
-                            addMessage("Выбрана ставка на число " + number + " номиналом " + chipValue);
-                        } else if ((betTypeStr.equals("red") || betTypeStr.equals("black") ||
-                                    betTypeStr.equals("even") || betTypeStr.equals("odd")) && hit instanceof String) {
-                            String sideType = (String) hit;
-                            if (betTypeStr.equals(sideType)) {
-                                pendingBet = new Bet(playerName, betTypeStr, 0, chipValue);
-                                addMessage("Выбрана ставка на " + sideType.toUpperCase() + " номиналом " + chipValue);
-                            } else {
-                                addMessage("Перетащите фишку на соответствующее поле (" + betTypeStr + " -> " + sideType + ")");
-                            }
+                        Bet bet = null;
+                        if ("number".equals(betType) && hit instanceof Integer) {
+                            bet = new Bet(playerName, "number", (Integer) hit, chipValue);
+                        } else if ((betType.equals("red") || betType.equals("black") || betType.equals("even") || betType.equals("odd"))
+                                && hit instanceof String && betType.equals(hit)) {
+                            bet = new Bet(playerName, betType, 0, chipValue);
+                        }
+                        if (bet != null) {
+                            networkClient.placeBet(bet);
+                            addChatMessage("Ставка " + chipValue + " на " + betDescription(bet) + " отправлена");
                         } else {
-                            addMessage("Некорректное место для ставки");
+                            addChatMessage("Некорректное место для ставки " + betType);
                         }
-
-                        if (pendingBet != null) {
-                            networkClient.placeBet(pendingBet);
-                            addMessage("Ставка " + chipValue + " на " + betDescription(pendingBet) + " отправлена!");
-                            pendingBet = null;
-                        }
-                        success = true;
                     }
                 }
             }
-            event.setDropCompleted(success);
+            event.setDropCompleted(true);
             event.consume();
         });
     }
@@ -169,13 +136,11 @@ public class RouletteController {
 
     private void updateGameState(GameState state) {
         Platform.runLater(() -> {
-            this.currentState = state;
+            currentState = state;
             balanceLabel.setText("Баланс: " + state.getBalance());
             tableCanvas.updateBets(state.getAllBets(), playerName);
-            // Кнопка подтверждения ставки больше не нужна, ставки отправляются сразу
-            // placeBetButton.setDisable(!state.isBettingOpen());
             if (!state.isBettingOpen()) {
-                addMessage("Ставки больше не принимаются – рулетка вращается!");
+                addChatMessage("Ставки больше не принимаются – рулетка вращается!");
             }
         });
     }
@@ -183,37 +148,27 @@ public class RouletteController {
     private void showSpinResult(int number) {
         Platform.runLater(() -> {
             lastNumberLabel.setText("Последнее: " + number);
-            addMessage("Выпало число " + number);
+            addChatMessage("Выпало число " + number);
             tableCanvas.spinWheel(number, () -> {
-                addMessage("Раунд завершён. Результаты выплачены.");
-                tableCanvas.updateBets(currentState.getAllBets(), playerName);
+                addChatMessage("Раунд завершён. Результаты выплачены.");
+                if (currentState != null)
+                    tableCanvas.updateBets(currentState.getAllBets(), playerName);
             });
         });
     }
 
     private void onRoundStart(String msg) {
-        Platform.runLater(() -> addMessage("Новый раунд! Делайте ставки."));
+        Platform.runLater(() -> addChatMessage("Новый раунд! Делайте ставки."));
     }
 
     private void onError(String error) {
-        Platform.runLater(() -> {
-            addMessage("Ошибка: " + error);
-        });
-    }
-
-    private void addMessage(String msg) {
-        Platform.runLater(() -> {
-            Label label = new Label(msg);
-            label.setStyle("-fx-text-fill: #343A40; -fx-background-color: #E9ECEF; -fx-padding: 4 8; -fx-background-radius: 3;");
-            messageContentBox.getChildren().add(label);
-            messageScrollPane.setVvalue(1.0);
-        });
+        Platform.runLater(() -> addChatMessage("Ошибка: " + error));
     }
 
     private void addChatMessage(String msg) {
         Platform.runLater(() -> {
             Label label = new Label(msg);
-            label.setStyle("-fx-text-fill: #495057; -fx-background-color: #F8F9FA; -fx-padding: 4 8; -fx-background-radius: 3;");
+            label.setStyle("-fx-text-fill: #333; -fx-background-color: #F8F9FA; -fx-padding: 4 8; -fx-background-radius: 3;");
             messageContentBox.getChildren().add(label);
             messageScrollPane.setVvalue(1.0);
         });
@@ -221,22 +176,19 @@ public class RouletteController {
 
     @FXML
     private void sendChatMessage() {
-        String message = chatInputField.getText();
-        if (message != null && !message.trim().isEmpty()) {
-            networkClient.sendChatMessage(message);
+        String msg = chatInputField.getText();
+        if (msg != null && !msg.trim().isEmpty()) {
+            networkClient.sendChatMessage(msg);
             chatInputField.clear();
         }
     }
 
     @FXML
     private void openMainMenu() throws IOException {
-        networkClient.disconnect(); // Отключаемся от сервера рулетки
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/main_menu.fxml"));
         Parent root = loader.load();
         MainMenuController controller = loader.getController();
-        // Передаем playerName, но не networkClient, так как для меню он не нужен
-        // Если нужно переподключаться к серверу при возвращении в меню, то логика сложнее
-        controller.initData(null, playerName); // networkClient = null, так как мы отключились
+        controller.initData(networkClient, playerName);
         Stage stage = (Stage) balanceLabel.getScene().getWindow();
         stage.setScene(new Scene(root, 600, 400));
         stage.setTitle("Казино - " + playerName);

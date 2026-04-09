@@ -2,15 +2,19 @@ package roulette.net;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import roulette.model.Bet;
 import roulette.model.GameState;
+import roulette.model.TarakanData;
 
+import java.lang.reflect.Type;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -30,6 +34,9 @@ public class NetworkClient {
     private BiConsumer<Boolean, String> onRegisterResult;
     private Consumer<String> onError;
     private Consumer<String> onChatMessage;
+    private Consumer<List<TarakanData>> onCockroachRoutes;
+    private Consumer<List<TarakanData>> onCockroachPositions;
+    private Consumer<Integer> onRaceWinner;
 
     public void connect(String host, int port) throws IOException {
         socket = new Socket(host, port);
@@ -44,9 +51,7 @@ public class NetworkClient {
                     processMessage(line);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-                if (onError != null) onError.accept("Connection lost");
-                if (onChatMessage != null) onChatMessage.accept("System: Connection lost");
+                if (onError != null) onError.accept("Соединение потеряно: " + e.getMessage());
             } finally {
                 disconnect();
             }
@@ -86,22 +91,35 @@ public class NetworkClient {
                 if (onRoundStart != null) onRoundStart.accept(roundMsg);
                 break;
 
-            case "race_start":
-                if (onRaceStart != null) {
-                    Map<String, Object> startData = gson.fromJson(root.get("data"), Map.class);
-                    onRaceStart.accept(startData);
-                }
-                break;
-            case "race_result":
-                if (onRaceResult != null) {
-                    Map<String, Object> resultData = gson.fromJson(root.get("data"), Map.class);
-                    onRaceResult.accept(resultData);
-                }
-                break;
             case "chat_message":
                 String chatMsg = root.get("data").getAsString();
                 if (onChatMessage != null) onChatMessage.accept(chatMsg);
                 break;
+
+            case "cockroach_routes":
+                if (onCockroachRoutes != null) {
+                    Type listType = new TypeToken<List<TarakanData>>(){}.getType();
+                    List<TarakanData> routes = gson.fromJson(root.get("data"), listType);
+                    onCockroachRoutes.accept(routes);
+                }
+                break;
+
+            case "cockroach_positions":
+                if (onCockroachPositions != null) {
+                    Type listType = new TypeToken<List<TarakanData>>(){}.getType();
+                    List<TarakanData> positions = gson.fromJson(root.get("data"), listType);
+                    onCockroachPositions.accept(positions);
+                }
+                break;
+
+            case "race_result":
+                if (onRaceWinner != null) {
+                    JsonObject data = root.getAsJsonObject("data");
+                    int winnerId = data.get("winnerId").getAsInt();
+                    onRaceWinner.accept(winnerId);
+                }
+                break;
+
             case "error":
                 String errorMsg = root.get("data").getAsString();
                 if (onError != null) onError.accept(errorMsg);
@@ -114,8 +132,7 @@ public class NetworkClient {
         Map<String, String> creds = new HashMap<>();
         creds.put("username", username);
         creds.put("password", password);
-        Message msg = new Message("login", creds);
-        out.println(gson.toJson(msg));
+        sendMessage("login", creds);
     }
 
     public void register(String username, String password) {
@@ -123,28 +140,34 @@ public class NetworkClient {
         Map<String, String> creds = new HashMap<>();
         creds.put("username", username);
         creds.put("password", password);
-        Message msg = new Message("register", creds);
-        out.println(gson.toJson(msg));
+        sendMessage("register", creds);
     }
 
     public void placeBet(Bet bet) {
         if (!connected) return;
-        Message msg = new Message("place_bet", bet);
-        out.println(gson.toJson(msg));
+        sendMessage("place_bet", bet);
     }
-    public void placeCockroachBet(int cockroachId, int amount) {
+
+    public void placeTarakanBet(int tarakanId, int amount) {
         if (!connected) return;
         Map<String, Object> data = new HashMap<>();
-        data.put("cockroachId", cockroachId);
+        data.put("tarakanId", tarakanId);
         data.put("amount", amount);
-        Message msg = new Message("place_cockroach_bet", data);
-        out.println(gson.toJson(msg));
+        sendMessage("place_tarakan_bet", data);
     }
+
     public void sendChatMessage(String message) {
         if (!connected) return;
-        Message msg = new Message("chat_message", message);
+        sendMessage("chat_message", message);
+    }
+
+    private void sendMessage(String type, Object data) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("type", type);
+        msg.put("data", data);
         out.println(gson.toJson(msg));
     }
+
     public void disconnect() {
         connected = false;
         try {
@@ -156,30 +179,15 @@ public class NetworkClient {
         }
     }
 
-    // Setters for callbacks
-    public void setOnGameStateUpdate(Consumer<GameState> callback) { this.onGameStateUpdate = callback; }
-    public void setOnSpinResult(Consumer<Integer> callback) { this.onSpinResult = callback; }
-    public void setOnRoundStart(Consumer<String> callback) { this.onRoundStart = callback; }
-    public void setOnLoginResult(BiConsumer<Boolean, String> callback) { this.onLoginResult = callback; }
-    public void setOnRegisterResult(BiConsumer<Boolean, String> callback) { this.onRegisterResult = callback; }
-    public void setOnError(Consumer<String> callback) { this.onError = callback; }
-    public void setOnChatMessage(Consumer<String> callback) { this.onChatMessage = callback; }
-
-    // Добавить поля
-    private Consumer<Map<String, Object>> onRaceStart;
-    private Consumer<Map<String, Object>> onRaceResult;
-
-    // Сеттеры
-    public void setOnRaceStart(Consumer<Map<String, Object>> callback) { this.onRaceStart = callback; }
-    public void setOnRaceResult(Consumer<Map<String, Object>> callback) { this.onRaceResult = callback; }
-
-    private static class Message {
-        String type;
-        Object data;
-
-        Message(String type, Object data) {
-            this.type = type;
-            this.data = data;
-        }
-    }
+    // Сеттеры колбэков
+    public void setOnGameStateUpdate(Consumer<GameState> cb) { this.onGameStateUpdate = cb; }
+    public void setOnSpinResult(Consumer<Integer> cb) { this.onSpinResult = cb; }
+    public void setOnRoundStart(Consumer<String> cb) { this.onRoundStart = cb; }
+    public void setOnLoginResult(BiConsumer<Boolean, String> cb) { this.onLoginResult = cb; }
+    public void setOnRegisterResult(BiConsumer<Boolean, String> cb) { this.onRegisterResult = cb; }
+    public void setOnError(Consumer<String> cb) { this.onError = cb; }
+    public void setOnChatMessage(Consumer<String> cb) { this.onChatMessage = cb; }
+    public void setOnCockroachRoutes(Consumer<List<TarakanData>> cb) { this.onCockroachRoutes = cb; }
+    public void setOnCockroachPositions(Consumer<List<TarakanData>> cb) { this.onCockroachPositions = cb; }
+    public void setOnRaceWinner(Consumer<Integer> cb) { this.onRaceWinner = cb; }
 }
