@@ -179,7 +179,6 @@ public class NetworkClient {
         }
     }
 
-    // Сеттеры колбэков
     public void setOnGameStateUpdate(Consumer<GameState> cb) { this.onGameStateUpdate = cb; }
     public void setOnSpinResult(Consumer<Integer> cb) { this.onSpinResult = cb; }
     public void setOnRoundStart(Consumer<String> cb) { this.onRoundStart = cb; }

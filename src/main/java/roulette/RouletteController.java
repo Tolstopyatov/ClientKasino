@@ -48,7 +48,7 @@ public class RouletteController {
 
     @FXML
     public void initialize() {
-        balanceLabel.setText("Баланс: 0");
+        balanceLabel.setText("Баланс: Загрузка...");
         lastNumberLabel.setText("Последнее: -");
         createChipPanels();
         setupDragAndDrop();
@@ -68,14 +68,8 @@ public class RouletteController {
             javafx.scene.paint.Color.web("#4682B4")
         };
         for (int i = 0; i < values.length; i++) {
-            chipPanelBox.getChildren().add(new BetPanel(values[i], "number", colors[i]));
+            chipPanelBox.getChildren().add(new BetPanel(values[i], colors[i]));
         }
-        chipPanelBox.getChildren().addAll(
-            new BetPanel(10, "red", javafx.scene.paint.Color.web("#E63946")),
-            new BetPanel(10, "black", javafx.scene.paint.Color.web("#343A40")),
-            new BetPanel(10, "even", javafx.scene.paint.Color.web("#28A745")),
-            new BetPanel(10, "odd", javafx.scene.paint.Color.web("#FFC107"))
-        );
     }
 
     private void setupDragAndDrop() {
@@ -85,7 +79,7 @@ public class RouletteController {
                 bp.setOnDragDetected(event -> {
                     Dragboard db = bp.startDragAndDrop(TransferMode.COPY);
                     ClipboardContent content = new ClipboardContent();
-                    content.putString(bp.getBetType() + ":" + bp.getChipValue());
+                    content.putString(String.valueOf(bp.getChipValue()));
                     db.setContent(content);
                     event.consume();
                 });
@@ -100,27 +94,30 @@ public class RouletteController {
         tableCanvas.setOnDragDropped(event -> {
             Dragboard db = event.getDragboard();
             if (db.hasString()) {
-                String[] parts = db.getString().split(":");
-                if (parts.length >= 2) {
-                    String betType = parts[0];
-                    int chipValue = Integer.parseInt(parts[1]);
-                    double x = event.getX();
-                    double y = event.getY();
-                    Object hit = tableCanvas.hitTest(x, y);
-                    if (hit != null) {
-                        Bet bet = null;
-                        if ("number".equals(betType) && hit instanceof Integer) {
-                            bet = new Bet(playerName, "number", (Integer) hit, chipValue);
-                        } else if ((betType.equals("red") || betType.equals("black") || betType.equals("even") || betType.equals("odd"))
-                                && hit instanceof String && betType.equals(hit)) {
-                            bet = new Bet(playerName, betType, 0, chipValue);
+                int chipValue;
+                try {
+                    chipValue = Integer.parseInt(db.getString());
+                } catch (NumberFormatException e) {
+                    return;
+                }
+
+                double x = event.getX();
+                double y = event.getY();
+                Object hit = tableCanvas.hitTest(x, y);
+                if (hit != null) {
+                    Bet bet = null;
+                    if (hit instanceof Integer number) {
+                        bet = new Bet(playerName, "number", number, chipValue);
+                    } else if (hit instanceof String type) {
+                        if ("red".equals(type) || "black".equals(type) || "even".equals(type) || "odd".equals(type)) {
+                            bet = new Bet(playerName, type, 0, chipValue);
                         }
-                        if (bet != null) {
-                            networkClient.placeBet(bet);
-                            addChatMessage("Ставка " + chipValue + " на " + betDescription(bet) + " отправлена");
-                        } else {
-                            addChatMessage("Некорректное место для ставки " + betType);
-                        }
+                    }
+                    if (bet != null) {
+                        networkClient.placeBet(bet);
+                        addChatMessage("Ставка " + chipValue + " на " + betDescription(bet) + " отправлена");
+                    } else {
+                        addChatMessage("Некорректное место для ставки");
                     }
                 }
             }

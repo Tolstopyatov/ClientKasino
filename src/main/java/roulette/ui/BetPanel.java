@@ -13,11 +13,9 @@ import javafx.scene.text.FontWeight;
 
 public class BetPanel extends StackPane {
     private final int chipValue;
-    private final String betType;
 
-    public BetPanel(int chipValue, String betType, Color color) {
+    public BetPanel(int chipValue, Color color) {
         this.chipValue = chipValue;
-        this.betType = betType;
 
         setPrefSize(60, 60);
         setStyle("-fx-background-color: transparent;");
@@ -37,13 +35,13 @@ public class BetPanel extends StackPane {
         setOnDragDetected(event -> {
             Dragboard db = startDragAndDrop(TransferMode.COPY);
             ClipboardContent content = new ClipboardContent();
-            // Передаём тип ставки и номинал (значение определится при drop)
-            content.putString(betType + ":" + chipValue);
+            content.putString(String.valueOf(chipValue));
             db.setContent(content);
             event.consume();
         });
     }
 
-    public int getChipValue() { return chipValue; }
-    public String getBetType() { return betType; }
+    public int getChipValue() {
+        return chipValue;
+    }
 }

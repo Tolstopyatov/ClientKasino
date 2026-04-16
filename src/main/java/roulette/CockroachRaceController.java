@@ -93,7 +93,6 @@ public class CockroachRaceController {
             label.setTranslateY(y + 5);
             raceTrack.getChildren().add(label);
         }
-        // Финишная линия
         double finishX = trackWidth - 50;
         javafx.scene.shape.Line finishLine = new javafx.scene.shape.Line(finishX, 0, finishX, trackHeight);
         finishLine.setStroke(Color.RED);
@@ -157,7 +156,6 @@ public class CockroachRaceController {
         networkClient.placeTarakanBet(selectedRoach, amount);
         addChatMessage("Ставка " + amount + " на таракана №" + selectedRoach + " отправлена");
         placeBetButton.setDisable(true);
-        // Не сбрасываем выбор, чтобы игрок мог видеть, на кого поставил
     }
 
     @FXML
@@ -174,7 +172,6 @@ public class CockroachRaceController {
             raceInProgress = true;
             raceStatusLabel.setText("ЗАБЕГ НАЧАЛСЯ!");
             addChatMessage("Старт! Тараканы побежали!");
-            // Сброс позиций на старт
             for (TarakanData c : tarakanes) {
                 Circle circle = roachCircles.get(c.getId());
                 if (circle != null) {
@@ -231,7 +228,7 @@ public class CockroachRaceController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/main_menu.fxml"));
         Parent root = loader.load();
         MainMenuController controller = loader.getController();
-        controller.initData(networkClient, playerName);  // не отключаемся!
+        controller.initData(networkClient, playerName);
         Stage stage = (Stage) balanceLabel.getScene().getWindow();
         stage.setScene(new Scene(root, 600, 400));
         stage.setTitle("Казино - " + playerName);

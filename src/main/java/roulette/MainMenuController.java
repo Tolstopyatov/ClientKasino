@@ -45,7 +45,6 @@ public class MainMenuController {
         if (networkClient != null) networkClient.disconnect();
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.close();
-        // Показываем окно входа заново
         try {
             new KazinoApp().start(new Stage());
         } catch (Exception e) {

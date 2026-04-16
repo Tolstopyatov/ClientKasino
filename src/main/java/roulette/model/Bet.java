@@ -3,8 +3,8 @@ package roulette.model;
 
 public class Bet {
     private String playerName;
-    private String type;      // "number"
-    private int value;        // номер от 0 до 36
+    private String type;
+    private int value;
     private int amount;
 
     public Bet(String playerName, String type, int value, int amount) {
@@ -14,7 +14,6 @@ public class Bet {
         this.amount = amount;
     }
 
-    // Getters and setters
     public String getPlayerName() { return playerName; }
     public void setPlayerName(String playerName) { this.playerName = playerName; }
     public String getType() { return type; }
